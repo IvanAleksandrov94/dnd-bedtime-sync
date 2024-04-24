@@ -1,7 +1,7 @@
 # DNDSync (**Root**)
 
 **:bangbang:
-This fork allows you to sync BedTime not only from your phone, but also to your watch using root on your phone. Also for Pixel Watch 2 it fixes "Power Save mode with BedTime".**
+This fork allows you to sync BedTime not only from your phone, but also from the watch using root on your phone. Also for Pixel Watch 2 it fixes "Power Save mode with BedTime".**
 
 ***:bangbang:The application requires Magisk or SuperSU***
 
