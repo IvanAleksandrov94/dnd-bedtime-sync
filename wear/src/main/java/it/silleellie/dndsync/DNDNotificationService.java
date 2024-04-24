@@ -1,6 +1,9 @@
 package it.silleellie.dndsync;
 
 
+import android.app.NotificationManager;
+import android.content.Context;
+import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.util.Log;
 
@@ -21,7 +24,10 @@ import it.silleellie.dndsync.shared.WearSignal;
 public class DNDNotificationService extends NotificationListenerService {
     private static final String TAG = "DNDNotificationService";
     private static final String DND_SYNC_CAPABILITY_NAME = "dnd_sync";
+
     private static final String DND_SYNC_MESSAGE_PATH = "/wear-dnd-sync";
+
+    private static final String BED_TIME_SYNC_MESSAGE_PATH = "/wear-bed-time-sync";
 
     public static boolean running = false;
 
@@ -61,7 +67,35 @@ public class DNDNotificationService extends NotificationListenerService {
 
         // preferences are now stored on the mobile app, so we send the signal nonetheless
         // and if the user ticked the relative option then it is synced to the phone
-        new Thread(() -> sendDNDSync(new WearSignal(interruptionFilter))).start();
+        String settingBedtimeStr = "setting_bedtime_mode_running_state";
+        int currentBedtimeState = Settings.Global.getInt(
+                getApplicationContext().getContentResolver(), settingBedtimeStr, -1);
+
+        if (currentBedtimeState != -1) {
+            Log.d(TAG, "watch is the galaxy watch");
+        } else {
+            Log.d(TAG, "watch is not the galaxy watch");
+
+            settingBedtimeStr = "bedtime_mode";
+            currentBedtimeState = Settings.Global.getInt(
+                    getApplicationContext().getContentResolver(), settingBedtimeStr, -1);
+        }
+
+
+        if(interruptionFilter == 2){
+            if(currentBedtimeState == 1){
+                new Thread(() -> sendBedTimeSync(new WearSignal(interruptionFilter))).start();
+            }else{
+                new Thread(() -> sendDNDSync(new WearSignal(interruptionFilter))).start();
+            }
+        } else {
+            if(currentBedtimeState == 0){
+                new Thread(() -> sendBedTimeSync(new WearSignal(interruptionFilter))).start();
+            }
+            new Thread(() -> sendDNDSync(new WearSignal(interruptionFilter))).start();
+
+        }
+
     }
 
     private void sendDNDSync(WearSignal wearSignal) {
@@ -95,6 +129,50 @@ public class DNDNotificationService extends NotificationListenerService {
                     byte[] data = SerializationUtils.serialize(wearSignal);
                     Task<Integer> sendTask =
                             Wearable.getMessageClient(this).sendMessage(node.getId(), DND_SYNC_MESSAGE_PATH, data);
+
+                    sendTask.addOnSuccessListener(integer ->
+                            Log.d(TAG, "send successful! Receiver node id: " + node.getId())
+                    );
+
+                    sendTask.addOnFailureListener(e ->
+                            Log.d(TAG, "send failed! Receiver node id: " + node.getId())
+                    );
+                }
+            }
+        }
+    }
+
+    private void sendBedTimeSync(WearSignal wearSignal) {
+        // https://developer.android.com/training/wearables/data/messages
+
+        // search nodes for sync
+        CapabilityInfo capabilityInfo = null;
+        try {
+            capabilityInfo = Tasks.await(
+                    Wearable.getCapabilityClient(this).getCapability(
+                            DND_SYNC_CAPABILITY_NAME, CapabilityClient.FILTER_REACHABLE));
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            Log.e(TAG, "execution error while searching nodes", e);
+            return;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Log.e(TAG, "interruption error while searching nodes", e);
+            return;
+        }
+
+        // send request to all reachable nodes
+        // capabilityInfo has the reachable nodes with the dnd sync capability
+        Set<Node> connectedNodes = capabilityInfo.getNodes();
+        if (connectedNodes.isEmpty()) {
+            // Unable to retrieve node with transcription capability
+            Log.d(TAG, "Unable to retrieve node with sync capability!");
+        } else {
+            for (Node node : connectedNodes) {
+                if (node.isNearby()) {
+                    byte[] data = SerializationUtils.serialize(wearSignal);
+                    Task<Integer> sendTask =
+                            Wearable.getMessageClient(this).sendMessage(node.getId(), BED_TIME_SYNC_MESSAGE_PATH, data);
 
                     sendTask.addOnSuccessListener(integer ->
                             Log.d(TAG, "send successful! Receiver node id: " + node.getId())

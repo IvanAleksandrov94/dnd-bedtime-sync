@@ -18,8 +18,11 @@ public class DNDSyncListenerService extends WearableListenerService {
     private static final String TAG = "DNDSyncListenerService";
     private static final String DND_SYNC_MESSAGE_PATH = "/wear-dnd-sync";
 
+    private static final String BED_TIME_SYNC_MESSAGE_PATH = "/wear-bed-time-sync";
+
     @Override
     public void onMessageReceived (@NonNull MessageEvent messageEvent) {
+
 
         if (messageEvent.getPath().equalsIgnoreCase(DND_SYNC_MESSAGE_PATH)) {
 

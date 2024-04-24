@@ -4,19 +4,28 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.service.notification.StatusBarNotification;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
 public class MainFragment extends PreferenceFragmentCompat {
     private Preference dndPref;
+
+
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey);
-
         dndPref = findPreference("dnd_permission_key");
         assert(dndPref != null);
 
@@ -64,8 +73,19 @@ public class MainFragment extends PreferenceFragmentCompat {
             }
             return true;
         });
-
         checkDNDPermission();
+        requestRootAccess();
+    }
+
+
+
+    private static void requestRootAccess() {
+        try {
+            Process process = Runtime.getRuntime().exec("su");
+            process.waitFor(150, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | IOException e) {
+            Log.e("MainFragment", Objects.requireNonNull(e.getLocalizedMessage()));
+        }
     }
 
     private boolean checkDNDPermission() {
