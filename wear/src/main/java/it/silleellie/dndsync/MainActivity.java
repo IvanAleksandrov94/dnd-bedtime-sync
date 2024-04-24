@@ -1,6 +1,7 @@
 package it.silleellie.dndsync;
 
 import android.os.Bundle;
+import android.provider.Settings;
 
 import androidx.appcompat.app.AppCompatActivity;
 

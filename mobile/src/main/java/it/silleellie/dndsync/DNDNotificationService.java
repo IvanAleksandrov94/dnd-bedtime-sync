@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
+import android.widget.Toast;
+
 import androidx.preference.PreferenceManager;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -33,6 +35,8 @@ public class DNDNotificationService extends NotificationListenerService {
     public void onNotificationPosted(StatusBarNotification sbn){
 
         if(isWindDownNotification(sbn)) {
+
+            Toast.makeText(this, String.valueOf(isWindDownNotification(sbn)), Toast.LENGTH_LONG).show();
 
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean syncBedTime = prefs.getBoolean("bedtime_sync_key", true);

@@ -18,8 +18,6 @@ public class DNDSyncListenerService extends WearableListenerService {
     private static final String TAG = "DNDSyncListenerService";
     private static final String DND_SYNC_MESSAGE_PATH = "/wear-dnd-sync";
 
-    private static final String BED_TIME_SYNC_MESSAGE_PATH = "/wear-bed-time-sync";
-
     @Override
     public void onMessageReceived (@NonNull MessageEvent messageEvent) {
 
@@ -149,12 +147,15 @@ public class DNDSyncListenerService extends WearableListenerService {
         boolean smConnectivityDisable = Settings.Secure.putInt(
                 getApplicationContext().getContentResolver(), "sm_connectivity_disable", newSetting);
 
+        boolean globalPowerDisable = Settings.Global.putInt(
+                getApplicationContext().getContentResolver(), "battery_saver_mode", newSetting);
+
         // screen timeout should be set to 10000 also, and ambient_tilt_to_wake should be set to 0
         // but previous variable states in those 2 cases must be stored and they do not seem to stick
         // and they are not so much important tbh (ambient tilt to wake is disabled anyways)
 
         return lowPower && restrictedDevicePerformance
-                && lowPowerBackDataOff && smConnectivityDisable;
+                && lowPowerBackDataOff && smConnectivityDisable && globalPowerDisable;
     }
 
     private void vibrate() {
